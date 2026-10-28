@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#17102f">
+<title>The Mystery Possession Wall</title>
+<style>
+  :root {
+    --bg: #100b20; --panel: #1c1535; --panel2: #261d45; --gold: #ffd66b;
+    --pink: #ff75bd; --cyan: #81e8ff; --text: #f8f5ff; --muted: #c2b9dc;
+    --good: #8df0bc; --bad: #ff9aab;
+  }
+  * { box-sizing: border-box; }
+  html { min-height: 100%; background: var(--bg); }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: radial-gradient(ellipse at 12% 0%, #3d205f 0%, transparent 38%),
+                radial-gradient(ellipse at 100% 85%, #172e58 0%, transparent 35%), var(--bg);
+    display: flex; justify-content: center; align-items: center; padding: 20px;
+  }
+  button { font: inherit; }
+  .app { width: min(100%, 1050px); margin: auto; }
+  .topline { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; }
+  .brand { font-size: .77rem; color: var(--muted); letter-spacing: .2em; font-weight:800; text-transform:uppercase; }
+  .score-pill { border:1px solid #65518b; background:#201739d9; padding:9px 14px; border-radius:999px; font-weight:800; white-space:nowrap; }
+  .score-pill strong { color:var(--gold); }
+  .screen { display:none; }
+  .screen.active { display:block; animation: appear .3s ease both; }
+  @keyframes appear { from {opacity:0; transform:translateY(8px)} to {opacity:1; transform:translateY(0)} }
+  .panel { background:linear-gradient(145deg, #21183dF2, #171329F5); border:1px solid #51416d; border-radius:28px; box-shadow:0 24px 70px #0005; overflow:hidden; }
+  .welcome { padding: clamp(28px, 6vw, 64px); text-align:center; }
+  .eyebrow { color:var(--cyan); font-weight:900; font-size:.78rem; letter-spacing:.2em; text-transform:uppercase; }
+  h1 { font-size:clamp(2.2rem, 7vw, 4.8rem); line-height:.98; letter-spacing:-.055em; max-width:800px; margin:16px auto; }
+  h1 span { color:var(--gold); text-shadow:0 0 30px #ffce5a50; }
+  .intro { color:var(--muted); max-width:590px; margin:18px auto 26px; font-size:1.05rem; line-height:1.65; }
+  .mini-stats { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin:24px 0 30px; }
+  .mini-stats span { border:1px solid #584575; background:#ffffff08; border-radius:12px; padding:10px 14px; color:#e8e0ff; }
+  .primary, .secondary { border:0; border-radius:14px; padding:14px 22px; font-weight:900; cursor:pointer; transition:transform .15s, filter .15s; }
+  .primary { color:#221537; background:linear-gradient(135deg,var(--gold),#ffad83); box-shadow:0 8px 24px #ffbf5633; }
+  .secondary { color:var(--text); background:#332650; border:1px solid #65518b; }
+  button:hover { filter:brightness(1.07); transform:translateY(-1px); }
+  button:focus-visible { outline:3px solid var(--cyan); outline-offset:3px; }
+  .game-panel { padding:clamp(18px,3.5vw,34px); }
+  .round-row { display:flex; justify-content:space-between; gap:15px; align-items:center; color:var(--muted); font-size:.9rem; font-weight:750; }
+  .round-row strong { color:var(--gold); }
+  .timer-pill { border:1px solid #8e6d35; background:#352817; color:#ffe09a; padding:8px 12px; border-radius:999px; font-weight:900; white-space:nowrap; }
+  .timer-pill.urgent { color:#fff; background:#7f1d35; border-color:#ff718c; animation:pulse .6s infinite alternate; }
+  @keyframes pulse { to { transform:scale(1.04); } }
+  .progress { height:8px; background:#0e0a1b; border-radius:20px; overflow:hidden; margin:14px 0 22px; border:1px solid #3e315c; }
+  .progress > div { width:0%; height:100%; border-radius:20px; background:linear-gradient(90deg,var(--pink),var(--gold)); transition:width .3s ease; }
+  .question { font-size:clamp(1.35rem,3.4vw,2.1rem); margin:0 0 22px; line-height:1.2; letter-spacing:-.025em; }
+  .question small { display:block; color:var(--cyan); text-transform:uppercase; font-size:.72rem; letter-spacing:.15em; margin-bottom:9px; }
+  .game-grid { display:grid; grid-template-columns:minmax(0, .9fr) minmax(0, 1.1fr); gap:clamp(18px,3vw,30px); align-items:stretch; }
+  .photo-card { min-height:350px; position:relative; border-radius:21px; overflow:hidden; background:linear-gradient(145deg,#40315d,#17152c); border:1px solid #6c588f; display:flex; flex-direction:column; }
+  .photo-wrap { flex:1; height:390px; min-height:290px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  .photo-wrap img { width:100%; height:100%; min-height:290px; max-height:430px; position:absolute; inset:0; object-fit:cover; object-position:center 30%; }
+  .photo-wrap::after { content:""; position:absolute; inset:35% 0 0; background:linear-gradient(transparent,#120d21d9); pointer-events:none; }
+  .photo-fallback { width:100%; min-height:290px; display:grid; place-items:center; color:#fff; background:radial-gradient(circle at 50% 20%,#7759a8,#2a1d49 60%,#151126 100%); overflow:hidden; }
+  .fallback-art { width:100%; min-height:290px; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:28px 18px 54px; text-align:center; background:radial-gradient(circle at 50% 42%,#fff2 0 9%,transparent 34%); }
+  .fallback-art::before { content:'✦  ✧  ✦'; position:absolute; top:18px; left:0; right:0; color:#ffd66b; letter-spacing:1.2em; opacity:.8; font-size:1rem; }
+  .fallback-emoji { display:grid; place-items:center; width:150px; height:150px; border-radius:50%; font-size:5.4rem; background:linear-gradient(145deg,#ffffff25,#ffffff08); border:2px solid #e6d7ff55; box-shadow:0 0 36px #d8aaff28,inset 0 0 25px #ffffff10; }
+  .fallback-name { font-size:1rem; font-weight:950; letter-spacing:.06em; text-transform:uppercase; max-width:90%; }
+  .fallback-sub { color:#d8c9f2; font-size:.68rem; font-weight:850; letter-spacing:.2em; }
+  .photo-caption { position:absolute; left:16px; right:16px; bottom:15px; z-index:1; font-size:.78rem; text-transform:uppercase; letter-spacing:.15em; color:white; font-weight:900; }
+  .photo-sticker { position:absolute; top:13px; left:13px; z-index:2; padding:7px 10px; border-radius:999px; background:#17102dd9; border:1px solid #9480b6; font-size:.7rem; font-weight:800; }
+  .answers { display:flex; flex-direction:column; gap:11px; }
+  .answers-label { margin:0 0 2px; color:var(--muted); font-size:.8rem; font-weight:850; letter-spacing:.12em; text-transform:uppercase; }
+  .answer { display:flex; align-items:center; gap:12px; text-align:left; width:100%; border:1px solid #54436f; color:var(--text); background:#251c40; padding:14px 15px; border-radius:14px; min-height:57px; cursor:pointer; transition:background .15s,border .15s,transform .15s; }
+  .answer:hover:not(:disabled) { border-color:var(--cyan); background:#30254f; transform:translateX(2px); }
+  .letter { display:grid; place-items:center; flex:0 0 30px; width:30px; height:30px; border-radius:9px; background:#42345f; color:var(--gold); font-size:.86rem; font-weight:950; }
+  .answer.correct { border-color:var(--good); background:#164332; }
+  .answer.wrong { border-color:var(--bad); background:#4a2038; }
+  .answer:disabled { cursor:default; }
+  .feedback { display:none; margin-top:14px; border:1px solid #665280; border-radius:14px; padding:13px 15px; line-height:1.5; background:#ffffff08; }
+  .feedback.show { display:block; }
+  .feedback.good { border-color:#3f9c72; color:var(--good); }
+  .feedback.bad { border-color:#a64c6c; color:#ffd5de; }
+  .bottom-row { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-top:22px; }
+  .hint { color:var(--muted); font-size:.85rem; }
+  .next-btn { display:none; }
+  .next-btn.show { display:inline-flex; }
+  .result { padding:clamp(25px,6vw,58px); text-align:center; }
+  .medal { width:142px; height:142px; margin:0 auto 20px; display:grid; place-items:center; position:relative; }
+  .medal::before { content:""; position:absolute; width:76px; height:76px; top:0; left:33px; background:linear-gradient(135deg,#ffdf75,#b97818); clip-path:polygon(15% 0,85% 0,100% 100%,50% 76%,0 100%); opacity:.9; }
+  .medal::after { content:""; position:absolute; width:90px; height:90px; bottom:2px; left:26px; border-radius:50%; background:linear-gradient(135deg,#fff0a8,#e7a927 50%,#975c12); border:5px solid #ffe6a0; box-shadow:0 0 35px #ffcf594d, inset 0 0 0 4px #b8791c; }
+  .medal-star { z-index:1; position:relative; margin-top:42px; font-size:2.7rem; color:#805014; text-shadow:0 1px #fff0a8; }
+  .result h2 { font-size:clamp(2rem,5vw,3.3rem); margin:0 0 9px; letter-spacing:-.04em; }
+  .result .subtitle { color:var(--muted); margin:0 auto 25px; max-width:540px; line-height:1.6; }
+  .medal-name { color:var(--gold); letter-spacing:.13em; text-transform:uppercase; font-weight:1000; font-size:clamp(1rem,3vw,1.45rem); margin:12px 0; }
+  .final-score { font-size:clamp(2.7rem,8vw,5rem); font-weight:1000; letter-spacing:-.06em; margin:10px 0 0; }
+  .final-score span { color:var(--gold); }
+  .result-details { color:var(--muted); margin:6px 0 25px; }
+  .tiny-footer { text-align:center; color:#84789f; font-size:.72rem; margin-top:15px; }
+  @media (max-width:700px) {
+    body { padding:12px; align-items:flex-start; }
+    .topline { margin:5px 2px 14px; }
+    .brand { font-size:.62rem; letter-spacing:.12em; }
+    .game-grid { grid-template-columns:1fr; }
+    .photo-card { min-height:260px; }
+    .photo-wrap, .photo-wrap img, .photo-fallback { min-height:250px; max-height:340px; }
+    .answers { gap:9px; }
+    .bottom-row { align-items:stretch; flex-direction:column; }
+    .bottom-row .primary { width:100%; justify-content:center; }
+    .hint { text-align:center; }
+  }
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; } }
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="topline">
+    <div class="brand">✦ Mystery game • Photo challenge</div>
+    <div class="score-pill">Puntos: <strong id="topScore">0</strong> / 50</div>
+  </div>
+
+  <section id="welcomeScreen" class="screen active panel welcome" aria-labelledby="mainTitle">
+    <div class="eyebrow">Tu misión comienza aquí</div>
+    <h1 id="mainTitle">THE MYSTERY<br><span>POSSESSION WALL</span></h1>
+    <p class="intro">¡Practica los possessives en inglés con fotos de famosos y caricaturas! Aprende cuándo usar <strong>’s</strong>, cuándo usar <strong>s’</strong> y cuáles palabras posesivas van <strong>sin apóstrofo</strong> (his, her, their, its). Cada partida mezcla preguntas e imágenes para que no siempre te toque lo mismo. Consigue 10 puntos por acierto y desbloquea tu medalla secreta.</p>
+    <div class="mini-stats"><span>✦ 5 rondas</span><span>★ 10 puntos por acierto</span><span>🏅 Premio final</span></div>
+    <button class="primary" id="startBtn">Comenzar el misterio →</button>
+  </section>
+
+  <section id="gameScreen" class="screen panel game-panel" aria-live="polite">
+    <div class="round-row"><span id="roundLabel">RONDA 1 DE 5</span><span>Premio por acierto: <strong>+10 puntos</strong></span><span class="timer-pill" id="timerDisplay" aria-live="polite">⏱ 20 s</span></div>
+    <div class="progress" aria-label="Progreso del juego"><div id="progressBar"></div></div>
+    <h2 class="question"><small id="categoryLabel">TIPO DE POSESIVO</small><span id="questionText">Which sentence uses a possessive correctly?</span></h2>
+    <div class="game-grid">
+      <div class="photo-card">
+        <div class="photo-wrap">
+          <div class="photo-fallback" id="photoFallback" role="img" aria-label="Ilustración de respaldo del personaje"></div>
+          <img id="celebrityPhoto" alt="Foto de la celebridad de esta ronda" hidden>
+          <div class="photo-sticker">ARCHIVO SECRETO</div>
+          <div class="photo-caption" id="photoCaption">Identidad desconocida</div>
+        </div>
+      </div>
+      <div>
+        <div class="answers" id="answerList" aria-label="Opciones de respuesta"></div>
+        <div class="feedback" id="feedback" role="status"></div>
+      </div>
+    </div>
+    <div class="bottom-row"><span class="hint" id="hintText">Elige una opción para continuar.</span><button class="primary next-btn" id="nextBtn">Siguiente ronda →</button></div>
+  </section>
+
+  <section id="resultScreen" class="screen panel result" aria-labelledby="resultTitle">
+    <div class="eyebrow">Misterio completado</div>
+    <div class="medal" id="medalDisplay" aria-label="Medalla dorada"><span class="medal-star">★</span></div>
+    <h2 id="resultTitle">¡Has desbloqueado tu medalla!</h2>
+    <div class="medal-name" id="medalName">Possesive Photo Booth</div>
+    <p class="subtitle" id="resultMessage">Tu colección de fotos misteriosas está completa.</p>
+    <div class="final-score"><span id="finalScore">0</span><span> / 50</span></div>
+    <p class="result-details" id="resultDetails">0 de 5 respuestas correctas</p>
+    <button class="primary" id="restartBtn">Jugar otra vez ↻</button>
+  </section>
+  <div class="tiny-footer">THE MYSTERY POSSESSION WALL · Edición de estrellas · Fotos online; ilustración de respaldo si falla la carga</div>
+</main>
+<script>
+(() => {
+  const questionBank = [
+    // Singular nouns and names: add 's.
+    { id:'singular-shakira', category:'singular', categoryLabel:"SINGULAR: ADD 'S", question:'Which sentence correctly shows that the hat belongs to Shakira?', answer:"It is Shakira's hat.", choices:["It is Shakira hat.","It is Shakira's hat.","It is Shakiras' hat.","It is the Shakira hat."], image:'https://upload.wikimedia.org/wikipedia/commons/a/ad/Shakira.PNG', initials:'SH', caption:'Shakira · Singer' },
+    { id:'singular-ronaldo', category:'singular', categoryLabel:"SINGULAR: ADD 'S", question:'Which sentence shows that the football boots belong to Cristiano Ronaldo?', answer:"They are Cristiano Ronaldo's boots.", choices:["They are Cristiano Ronaldo boots.","They are Cristiano Ronaldos' boots.","They are Cristiano Ronaldo's boots.","They are the boots Cristiano Ronaldo."], image:'https://upload.wikimedia.org/wikipedia/commons/9/94/2025_Cristiano_Ronaldo_%28cropped%29.jpg', initials:'CR7', caption:'Cristiano Ronaldo · Footballer' },
+    { id:'singular-taylor', category:'singular', categoryLabel:"SINGULAR: ADD 'S", question:'Which sentence correctly shows that the guitar belongs to Taylor Swift?', answer:"It is Taylor Swift's guitar.", choices:["It is Taylor Swift guitar.","It is Taylor Swifts' guitar.","It is the guitar Taylor Swift.","It is Taylor Swift's guitar."], image:'https://image.tmdb.org/t/p/original/xpTNiyJ5PAogtmdjySMZ1sNlvh1.jpg', initials:'TS', caption:'Taylor Swift · Singer' },
+    { id:'singular-messi', category:'singular', categoryLabel:"SINGULAR: ADD 'S", question:'Which sentence shows that the jersey belongs to Lionel Messi?', answer:"It is Lionel Messi's jersey.", choices:["It is Lionel Messi jersey.","It is Lionel Messi's jersey.","It is Lionel Messis jersey.","It is the jersey Lionel Messi."], image:'https://www.zerozero.com.mx/img/jogadores/new/05/92/10592_lionel_messi_20250615120609.png', initials:'LM', caption:'Lionel Messi · Footballer' },
+    { id:'singular-zendaya', category:'singular', categoryLabel:"SINGULAR: ADD 'S", question:'Choose the sentence that shows the sunglasses belong to Zendaya.', answer:"They are Zendaya's sunglasses.", choices:["They are Zendaya sunglasses.","They are Zendayas sunglasses.","They are Zendaya's sunglasses.","They are the sunglasses Zendaya."], image:'https://commons.wikimedia.org/wiki/Special:FilePath/Zendaya_in_2017.jpg', initials:'Z', caption:'Zendaya · Actor' },
+    { id:'singular-ariana', category:'singular', categoryLabel:"SINGULAR: ADD 'S", question:'Which sentence correctly shows that the microphone belongs to Ariana Grande?', answer:"It is Ariana Grande's microphone.", choices:["It is Ariana Grande microphone.","It is Ariana Grandes' microphone.","It is Ariana Grande's microphone.","It is the microphone Ariana Grande."], image:'https://images.hdqwalls.com/wallpapers/ariana-grande-face-portrait-4k-zi.jpg', initials:'AG', caption:'Ariana Grande · Singer' },
+    { id:'singular-miley', category:'singular', categoryLabel:"SINGULAR: ADD 'S", question:'Which sentence shows that the album belongs to Miley Cyrus?', answer:"It is Miley Cyrus's album.", choices:["It is Miley Cyrus album.","It is Miley Cyrus album cover.","It is Miley Cyrus's album.","It is the album Miley Cyrus."], image:'https://1.bp.blogspot.com/-Pk19j8eOUX0/XDuGSeM0-kI/AAAAAAAATR0/6vZT30FM6rkp_HVhVrIuownXxO4JcUPvwCLcBGAs/s1600/miley%2Bcyrus%2Bgo%2Bprofile%2B1.jpeg', initials:'MC', caption:'Miley Cyrus · Singer' },
+    { id:'singular-naruto', category:'singular', categoryLabel:"SINGULAR: ADD 'S", question:'Which sentence correctly shows that the headband belongs to Naruto?', answer:"It is Naruto's headband.", choices:["It is Naruto headband.","It is Naruto's headband.","It is Narutos' headband.","It is the headband Naruto."], image:'https://pngimg.com/uploads/naruto/naruto_PNG17.png', initials:'N', caption:'Naruto · Anime character' },
+    { id:'singular-mickey', category:'singular', categoryLabel:"SINGULAR: ADD 'S", question:'Which sentence shows that the gloves belong to Mickey Mouse?', answer:"They are Mickey Mouse's gloves.", choices:["They are Mickey Mouse gloves.","They are Mickey Mouses' gloves.","They are Mickey Mouse's gloves.","They are the gloves Mickey Mouse."], image:'https://vignette.wikia.nocookie.net/disney/images/a/a4/Mickey_mouse.png/revision/latest?cb=20140316193249&path-prefix=ru', initials:'MM', caption:'Mickey Mouse · Cartoon' },
+    { id:'singular-spongebob', category:'singular', categoryLabel:"SINGULAR: ADD 'S", question:'Which sentence shows that the pineapple house belongs to SpongeBob?', answer:"It is SpongeBob's house.", choices:["It is SpongeBob house.","It is SpongeBobs' house.","It is SpongeBob's house.","It is the house SpongeBob."], image:'https://spongebobwiki.s3.us-east-va.io.cloud.ovh.us/thumb/5/5d/SpongeBob.svg/1200px-SpongeBob.svg.png', initials:'SB', caption:'SpongeBob · Cartoon' },
+    { id:'singular-mario', category:'singular', categoryLabel:"SINGULAR: ADD 'S", question:'Which sentence shows that the red cap belongs to Mario?', answer:"It is Mario's cap.", choices:["It is Mario cap.","It is Marios' cap.","It is Mario's cap.","It is the cap Mario."], image:'https://www.smashbros.com/assets_v2/img/fighter/mario/main.png', initials:'M', caption:'Mario · Video game character' },
+    { id:'singular-pikachu', category:'singular', categoryLabel:"SINGULAR: ADD 'S", question:'Which sentence correctly shows that the tail belongs to Pikachu?', answer:"It is Pikachu's tail.", choices:["It is Pikachu tail.","It is Pikachu's tail.","It is Pikachus' tail.","It is the tail Pikachu."], image:'https://assets.pokemon.com/assets/cms2/img/pokedex/full/025.png', initials:'P', caption:'Pikachu · Cartoon character' },
+    { id:'singular-badbunny', category:'singular', categoryLabel:"SINGULAR: ADD 'S", question:'Which sentence shows that the microphone belongs to Bad Bunny?', answer:"It is Bad Bunny's microphone.", choices:["It is Bad Bunny microphone.","It is Bad Bunnys' microphone.","It is Bad Bunny's microphone.","It is the microphone Bad Bunny."], image:'https://is1-ssl.mzstatic.com/image/thumb/Features211/v4/6c/92/d4/6c92d475-7be5-8b7a-a7d8-fdc3d937629e/mza_9478576998108878943.png/486x486bb.png', initials:'BB', caption:'Bad Bunny · Singer' },
+
+    // Regular plural nouns ending in s: put the apostrophe after the s.
+    { id:'plural-minions-goggles', category:'pluralS', categoryLabel:"PLURAL ENDING IN S: ADD S'", question:'Which sentence shows that the Minions own the goggles?', answer:"The Minions' goggles are silver.", choices:["The Minions goggles are silver.","The Minion's goggles are silver.","The Minions's goggles are silver.","The Minions' goggles are silver."], image:'https://www.movie-infos.net/media/userImages/84/2098-84bf961f.jpg', initials:'M!', caption:'The Minions · Cartoon group' },
+    { id:'plural-simpsons-house', category:'pluralS', categoryLabel:"PLURAL ENDING IN S: ADD S'", question:'Which sentence correctly shows that the Simpsons family owns the house?', answer:"The Simpsons' house is in Springfield.", choices:["The Simpsons house is in Springfield.","The Simpson's house is in Springfield.","The Simpsons' house is in Springfield.","The Simpsons's house is in Springfield."], image:'https://www.xtrafondos.com/wallpapers/los-simpsons-3463.jpg', initials:'TS', caption:'The Simpsons · Cartoon family' },
+    { id:'plural-players-cleats', category:'pluralS', categoryLabel:"PLURAL ENDING IN S: ADD S'", question:'Which sentence shows that the football players own the cleats?', answer:"The players' cleats are muddy.", choices:["The player's cleats are muddy.","The players cleats are muddy.","The players' cleats are muddy.","The players's cleats are muddy."], image:'https://upload.wikimedia.org/wikipedia/commons/9/94/2025_Cristiano_Ronaldo_%28cropped%29.jpg', initials:'CR7', caption:'Football players · Sports' },
+    { id:'plural-singers-mics', category:'pluralS', categoryLabel:"PLURAL ENDING IN S: ADD S'", question:'Which sentence shows that the singers own the microphones?', answer:"The singers' microphones are on the stage.", choices:["The singer's microphones are on the stage.","The singers microphones are on the stage.","The singers's microphones are on the stage.","The singers' microphones are on the stage."], image:'https://images.hdqwalls.com/wallpapers/ariana-grande-face-portrait-4k-zi.jpg', initials:'AG', caption:'Singers · Music' },
+    { id:'plural-girls-bags', category:'pluralS', categoryLabel:"PLURAL ENDING IN S: ADD S'", question:'Choose the sentence that shows that several girls own the bags.', answer:"The girls' bags are by the door.", choices:["The girl's bags are by the door.","The girls bags are by the door.","The girls' bags are by the door.","The girls's bags are by the door."], image:'https://image.tmdb.org/t/p/original/xpTNiyJ5PAogtmdjySMZ1sNlvh1.jpg', initials:'TS', caption:'Girls · School supplies' },
+    { id:'plural-minions-bananas', category:'pluralS', categoryLabel:"PLURAL ENDING IN S: ADD S'", question:'Which sentence correctly shows that the Minions own the bananas?', answer:"The Minions' bananas are yellow.", choices:["The Minions bananas are yellow.","The Minion's bananas are yellow.","The Minions' bananas are yellow.","The Minions's bananas are yellow."], image:'https://www.movie-infos.net/media/userImages/84/2098-84bf961f.jpg', initials:'M!', caption:'The Minions · Cartoon group' },
+    { id:'plural-students-books', category:'pluralS', categoryLabel:"PLURAL ENDING IN S: ADD S'", question:'Which sentence shows that all the students own the books?', answer:"The students' books are on the table.", choices:["The student's books are on the table.","The students books are on the table.","The students' books are on the table.","The students's books are on the table."], image:'https://spongebobwiki.s3.us-east-va.io.cloud.ovh.us/thumb/5/5d/SpongeBob.svg/1200px-SpongeBob.svg.png', initials:'SB', caption:'Students · Learning' },
+
+    // Irregular plurals that do not end in s: add 's.
+    { id:'irregular-children-toys', category:'irregular', categoryLabel:"IRREGULAR PLURAL: ADD 'S", question:'Which sentence shows that the children own the toys?', answer:"The children's toys are in the box.", choices:["The childrens toys are in the box.","The childrens' toys are in the box.","The children's toys are in the box.","The childrens's toys are in the box."], image:'https://www.xtrafondos.com/wallpapers/los-simpsons-3463.jpg', initials:'TS', caption:'The Simpsons · Cartoon family' },
+    { id:'irregular-men-locker', category:'irregular', categoryLabel:"IRREGULAR PLURAL: ADD 'S", question:'Which sentence correctly shows that the room belongs to the men?', answer:"The men's locker room is upstairs.", choices:["The mens locker room is upstairs.","The mens' locker room is upstairs.","The men's locker room is upstairs.","The mens's locker room is upstairs."], image:'https://upload.wikimedia.org/wikipedia/commons/9/94/2025_Cristiano_Ronaldo_%28cropped%29.jpg', initials:'CR7', caption:'Football team · Sports' },
+    { id:'irregular-women-shoes', category:'irregular', categoryLabel:"IRREGULAR PLURAL: ADD 'S", question:'Choose the sentence that shows that the shoes belong to the women.', answer:"The women's shoes are by the door.", choices:["The womens shoes are by the door.","The womens' shoes are by the door.","The women's shoes are by the door.","The womens's shoes are by the door."], image:'https://upload.wikimedia.org/wikipedia/commons/a/ad/Shakira.PNG', initials:'SH', caption:'Women · Fashion' },
+    { id:'irregular-people-seats', category:'irregular', categoryLabel:"IRREGULAR PLURAL: ADD 'S", question:'Which sentence shows that the people own the seats?', answer:"The people's seats are reserved.", choices:["The peoples seats are reserved.","The peoples' seats are reserved.","The people's seats are reserved.","The peoples's seats are reserved."], image:'https://www.xtrafondos.com/wallpapers/los-simpsons-3463.jpg', initials:'TS', caption:'The Simpsons · Cartoon family' },
+    { id:'irregular-mice-cheese', category:'irregular', categoryLabel:"IRREGULAR PLURAL: ADD 'S", question:'Which sentence correctly shows that the mice own the cheese?', answer:"The mice's cheese is hidden.", choices:["The mices cheese is hidden.","The mice' cheese is hidden.","The mice's cheese is hidden.","The mices' cheese is hidden."], image:'https://vignette.wikia.nocookie.net/disney/images/a/a4/Mickey_mouse.png/revision/latest?cb=20140316193249&path-prefix=ru', initials:'MM', caption:'Mickey Mouse · Cartoon' },
+
+    // Possessive determiners: no apostrophe.
+    { id:'det-minions-their', category:'determiner', categoryLabel:'POSSESSIVES WITHOUT APOSTROPHE', question:'Which sentence correctly describes the Minions’ blue overalls?', answer:'Their blue overalls are bright.', choices:["They're blue overalls are bright.","Their's blue overalls are bright.","Their blue overalls are bright.","Theirs blue overalls are bright."], image:'https://www.movie-infos.net/media/userImages/84/2098-84bf961f.jpg', initials:'M!', caption:'The Minions · Cartoon group' },
+    { id:'det-mario-his', category:'determiner', categoryLabel:'POSSESSIVES WITHOUT APOSTROPHE', question:'Choose the sentence that correctly describes Mario’s red cap.', answer:'His red cap has an M on it.', choices:["He's red cap has an M on it.","His red cap has an M on it.","His' red cap has an M on it.","Him red cap has an M on it."], image:'https://www.smashbros.com/assets_v2/img/fighter/mario/main.png', initials:'M', caption:'Mario · Video game character' },
+    { id:'det-taylor-her', category:'determiner', categoryLabel:'POSSESSIVES WITHOUT APOSTROPHE', question:'Which sentence correctly describes Taylor Swift’s guitar?', answer:'Her guitar is on the stage.', choices:["She's guitar is on the stage.","Hers guitar is on the stage.","Her's guitar is on the stage.","Her guitar is on the stage."], image:'https://image.tmdb.org/t/p/original/xpTNiyJ5PAogtmdjySMZ1sNlvh1.jpg', initials:'TS', caption:'Taylor Swift · Singer' },
+    { id:'det-simpsons-their', category:'determiner', categoryLabel:'POSSESSIVES WITHOUT APOSTROPHE', question:'Which sentence correctly describes the Simpsons family’s home?', answer:'Their home is in Springfield.', choices:["They're home is in Springfield.","Their home is in Springfield.","Their's home is in Springfield.","Theirs home is in Springfield."], image:'https://www.xtrafondos.com/wallpapers/los-simpsons-3463.jpg', initials:'TS', caption:'The Simpsons · Cartoon family' },
+    { id:'det-naruto-his', category:'determiner', categoryLabel:'POSSESSIVES WITHOUT APOSTROPHE', question:'Which sentence correctly describes Naruto’s headband?', answer:'His headband is blue.', choices:["He's headband is blue.","His' headband is blue.","His headband is blue.","Him headband is blue."], image:'https://pngimg.com/uploads/naruto/naruto_PNG17.png', initials:'N', caption:'Naruto · Anime character' },
+    { id:'det-shakira-her', category:'determiner', categoryLabel:'POSSESSIVES WITHOUT APOSTROPHE', question:'Which sentence correctly describes Shakira’s microphone?', answer:'Her microphone is on the table.', choices:["She's microphone is on the table.","Her's microphone is on the table.","Hers microphone is on the table.","Her microphone is on the table."], image:'https://upload.wikimedia.org/wikipedia/commons/a/ad/Shakira.PNG', initials:'SH', caption:'Shakira · Singer' },
+    { id:'det-ariana-her', category:'determiner', categoryLabel:'POSSESSIVES WITHOUT APOSTROPHE', question:'Which sentence correctly describes Ariana Grande’s hairstyle?', answer:'Her hairstyle is famous.', choices:["She's hairstyle is famous.","Her's hairstyle is famous.","Her hairstyle is famous.","Hers hairstyle is famous."], image:'https://images.hdqwalls.com/wallpapers/ariana-grande-face-portrait-4k-zi.jpg', initials:'AG', caption:'Ariana Grande · Singer' },
+
+    // Its = possession; it's = it is / it has.
+    { id:'its-pikachu-tail', category:'its', categoryLabel:"ITS vs. IT'S", question:'Which sentence uses its to show possession of Pikachu’s tail?', answer:'Its tail is yellow.', choices:["It's tail is yellow.","Its' tail is yellow.","Its tail is yellow.","It tail is yellow."], image:'https://assets.pokemon.com/assets/cms2/img/pokedex/full/025.png', initials:'P', caption:'Pikachu · Cartoon character' },
+    { id:'its-spongebob-house', category:'its', categoryLabel:"ITS vs. IT'S", question:'Which sentence uses its correctly to show that the house belongs to SpongeBob?', answer:'Its house is under the sea.', choices:["It's house is under the sea.","Its house is under the sea.","Its' house is under the sea.","It house is under the sea."], image:'https://spongebobwiki.s3.us-east-va.io.cloud.ovh.us/thumb/5/5d/SpongeBob.svg/1200px-SpongeBob.svg.png', initials:'SB', caption:'SpongeBob · Cartoon' },
+    { id:'its-mickey-contraction', category:'its', categoryLabel:"ITS vs. IT'S", question:'Which sentence correctly uses it’s to mean “it is”?', answer:"It's wearing white gloves.", choices:["Its wearing white gloves.","It's wearing white gloves.","Its' wearing white gloves.","It wearing white gloves."], image:'https://vignette.wikia.nocookie.net/disney/images/a/a4/Mickey_mouse.png/revision/latest?cb=20140316193249&path-prefix=ru', initials:'MM', caption:'Mickey Mouse · Cartoon' },
+    { id:'its-minions-contraction', category:'its', categoryLabel:"ITS vs. IT'S", question:'Which sentence correctly uses it’s to mean “it is” in a sentence about a Minion?', answer:"It's a yellow character.", choices:["Its a yellow character.","Its' a yellow character.","It's a yellow character.","It a yellow character."], image:'https://www.movie-infos.net/media/userImages/84/2098-84bf961f.jpg', initials:'M!', caption:'The Minions · Cartoon group' },
+    { id:'its-pikachu-cheeks', category:'its', categoryLabel:"ITS vs. IT'S", question:'Which sentence uses its correctly to show possession of Pikachu’s cheeks?', answer:'Its cheeks are red.', choices:["It's cheeks are red.","Its cheeks are red.","Its' cheeks are red.","It cheeks are red."], image:'https://assets.pokemon.com/assets/cms2/img/pokedex/full/025.png', initials:'P', caption:'Pikachu · Cartoon character' },
+    { id:'its-naruto-contraction', category:'its', categoryLabel:"ITS vs. IT'S", question:'Which sentence correctly uses it’s to mean “it is”?', answer:"It's an anime character.", choices:["Its an anime character.","It's an anime character.","Its' an anime character.","It an anime character."], image:'https://pngimg.com/uploads/naruto/naruto_PNG17.png', initials:'N', caption:'Naruto · Anime character' }
+  ];
+  const categories = ['singular', 'pluralS', 'irregular', 'determiner', 'its'];
+  let rounds = [];
+  const recentlyUsedQuestionIds = new Set();
+  const explanations = {
+    singular: "A singular name or noun usually takes apostrophe + s: Shakira's hat.",
+    pluralS: "For a regular plural ending in s, put the apostrophe after the s: the Minions' goggles.",
+    irregular: "Irregular plurals that do not end in s take apostrophe + s: children's toys, men's room.",
+    determiner: "Possessive determiners such as my, your, his, her, our and their do not use an apostrophe.",
+    its: "Its shows possession; it's means 'it is' or 'it has'."
+  };
+
+  const $ = (id) => document.getElementById(id);
+  let currentRound = 0;
+  let score = 0;
+  let correctCount = 0;
+  let answered = false;
+  let timeLeft = 20;
+  let timerInterval = null;
+  let roundDeadline = 0;
+  const letters = ['A', 'B', 'C', 'D'];
+
+  function shuffle(items) {
+    for (let i = items.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items;
+  }
+
+  function chooseFiveQuestions() {
+    const picked = categories.map(category => {
+      let candidates = questionBank.filter(q => q.category === category && !recentlyUsedQuestionIds.has(q.id));
+      if (candidates.length === 0) {
+        questionBank.filter(q => q.category === category).forEach(q => recentlyUsedQuestionIds.delete(q.id));
+        candidates = questionBank.filter(q => q.category === category);
+      }
+      const question = candidates[Math.floor(Math.random() * candidates.length)];
+      recentlyUsedQuestionIds.add(question.id);
+      return question;
+    });
+    return shuffle(picked);
+  }
+
+  function imageSourcesForRound(round) {
+    const text = (round.caption + ' ' + round.question + ' ' + round.answer).toLowerCase();
+    const backups = [];
+    if (text.includes('shakira')) backups.push('https://upload.wikimedia.org/wikipedia/commons/a/ad/Shakira.PNG');
+    if (text.includes('ronaldo')) backups.push('https://upload.wikimedia.org/wikipedia/commons/9/94/2025_Cristiano_Ronaldo_%28cropped%29.jpg');
+    if (text.includes('taylor swift')) backups.push('https://image.tmdb.org/t/p/original/xpTNiyJ5PAogtmdjySMZ1sNlvh1.jpg', 'https://commons.wikimedia.org/wiki/Special:FilePath/Taylor_Swift_2009.jpg');
+    if (text.includes('messi')) backups.push('https://www.zerozero.com.mx/img/jogadores/new/05/92/10592_lionel_messi_20250615120609.png');
+    if (text.includes('zendaya')) backups.push('https://commons.wikimedia.org/wiki/Special:FilePath/Zendaya_in_2017.jpg');
+    if (text.includes('ariana')) backups.push('https://images.hdqwalls.com/wallpapers/ariana-grande-face-portrait-4k-zi.jpg');
+    if (text.includes('miley')) backups.push('https://1.bp.blogspot.com/-Pk19j8eOUX0/XDuGSeM0-kI/AAAAAAAATR0/6vZT30FM6rkp_HVhVrIuownXxO4JcUPvwCLcBGAs/s1600/miley%2Bcyrus%2Bgo%2Bprofile%2B1.jpeg');
+    if (text.includes('bad bunny')) backups.push('https://is1-ssl.mzstatic.com/image/thumb/Features211/v4/6c/92/d4/6c92d475-7be5-8b7a-a7d8-fdc3d937629e/mza_9478576998108878943.png/486x486bb.png');
+    if (text.includes('naruto')) backups.push('https://pngimg.com/uploads/naruto/naruto_PNG17.png');
+    if (text.includes('mario')) backups.push('https://www.smashbros.com/assets_v2/img/fighter/mario/main.png');
+    if (text.includes('pikachu')) backups.push('https://assets.pokemon.com/assets/cms2/img/pokedex/full/025.png');
+    if (text.includes('mickey')) backups.push('https://vignette.wikia.nocookie.net/disney/images/a/a4/Mickey_mouse.png/revision/latest?cb=20140316193249&path-prefix=ru');
+    if (text.includes('spongebob')) backups.push('https://spongebobwiki.s3.us-east-va.io.cloud.ovh.us/thumb/5/5d/SpongeBob.svg/1200px-SpongeBob.svg.png');
+    if (text.includes('minion')) backups.push('https://www.movie-infos.net/media/userImages/84/2098-84bf961f.jpg');
+    if (text.includes('simpson')) backups.push('https://www.xtrafondos.com/wallpapers/los-simpsons-3463.jpg');
+    return [...new Set([round.image, ...backups].filter(Boolean))];
+  }
+
+  function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+    $(screenId).classList.add('active');
+  }
+  function updateScore() { $('topScore').textContent = score; }
+  function stopTimer() { if (timerInterval !== null) { clearInterval(timerInterval); timerInterval = null; } }
+  function startTimer() {
+    stopTimer(); timeLeft = 20; roundDeadline = Date.now() + 20000;
+    const display = $('timerDisplay'); display.textContent = `⏱ ${timeLeft} s`; display.classList.remove('urgent');
+    timerInterval = setInterval(() => {
+      if (answered) { stopTimer(); return; }
+      timeLeft = Math.max(0, Math.ceil((roundDeadline - Date.now()) / 1000));
+      display.textContent = `⏱ ${timeLeft} s`;
+      if (timeLeft <= 5) display.classList.add('urgent');
+      if (timeLeft <= 0) expireRound();
+    }, 1000);
+  }
+  function expireRound() {
+    if (answered) return;
+    stopTimer();
+    timeLeft = 0;
+    $('timerDisplay').textContent = '⏱ 0 s';
+    answered = true;
+    document.querySelectorAll('.answer').forEach(option => {
+      option.disabled = true;
+      if (option.lastElementChild.textContent === rounds[currentRound].answer) option.classList.add('correct');
+    });
+    $('feedback').textContent = `¡Se acabó el tiempo! Esta ronda vale 0 puntos. Respuesta correcta: ${rounds[currentRound].answer}`;
+    $('feedback').className = 'feedback show bad';
+    $('progressBar').style.width = `${((currentRound + 1) / rounds.length) * 100}%`;
+    $('nextBtn').textContent = currentRound === rounds.length - 1 ? 'Ver resultado →' : 'Siguiente ronda →';
+    $('nextBtn').classList.add('show');
+    $('hintText').textContent = 'Se acabó el tiempo. Esta ronda vale 0 puntos.';
+    updateScore();
+  }
+
+  function renderRound() {
+    stopTimer(); answered = false;
+    const round = rounds[currentRound];
+    $('roundLabel').textContent = `RONDA ${currentRound + 1} DE ${rounds.length}`;
+    $('progressBar').style.width = `${(currentRound / rounds.length) * 100}%`;
+    $('questionText').textContent = round.question;
+    $('categoryLabel').textContent = round.categoryLabel;
+    $('photoCaption').textContent = round.caption;
+    const fallback = $('photoFallback');
+    fallback.replaceChildren();
+    const art = document.createElement('div'); art.className = 'fallback-art';
+    const emoji = document.createElement('div'); emoji.className = 'fallback-emoji';
+    const name = (round.caption.split(' · ')[0] || 'Mystery star');
+    const lower = (round.caption + ' ' + round.question + ' ' + round.answer).toLowerCase();
+    let artEmoji = '🌟';
+    if (/pikachu|pokemon/.test(lower)) artEmoji = '⚡';
+    else if (/naruto|ninja|headband/.test(lower)) artEmoji = '🥷';
+    else if (/mario|cap has an m/.test(lower)) artEmoji = '🍄';
+    else if (/mickey|mouse|mice/.test(lower)) artEmoji = '🐭';
+    else if (/spongebob|pineapple|under the sea/.test(lower)) artEmoji = '🧽';
+    else if (/minion|overalls|goggles|bananas/.test(lower)) artEmoji = '🥽';
+    else if (/simpson|family|people|children/.test(lower)) artEmoji = '👨‍👩‍👧';
+    else if (/ronaldo|messi|football|jersey|cleats|players/.test(lower)) artEmoji = '⚽';
+    else if (/shakira|taylor|zendaya|ariana|miley|bad bunny|singer|microphone|guitar/.test(lower)) artEmoji = '🎤';
+    emoji.textContent = artEmoji;
+    const nameLabel = document.createElement('div'); nameLabel.className = 'fallback-name'; nameLabel.textContent = name;
+    const subLabel = document.createElement('div'); subLabel.className = 'fallback-sub'; subLabel.textContent = 'ILLUSTRATED PHOTO';
+    art.append(emoji, nameLabel, subLabel); fallback.append(art);
+    fallback.hidden = false;
+    const photo = $('celebrityPhoto');
+    photo.alt = `Foto o ilustración: ${round.caption}`;
+    photo.hidden = true;
+    const imageCandidates = imageSourcesForRound(round);
+    let imageIndex = 0;
+    photo.onload = () => { fallback.hidden = true; photo.hidden = false; };
+    photo.onerror = () => {
+      imageIndex++;
+      if (imageIndex < imageCandidates.length) {
+        photo.src = imageCandidates[imageIndex];
+      } else {
+        photo.hidden = true;
+        fallback.hidden = false;
+        fallback.setAttribute('aria-label', `Ilustración de respaldo de ${name}`);
+      }
+    };
+    photo.src = imageCandidates[0];
+
+    const list = $('answerList');
+    list.replaceChildren();
+    const shuffled = shuffle([...round.choices]);
+    shuffled.forEach((choice) => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'answer';
+      const letter = document.createElement('span'); letter.className = 'letter';
+      letter.textContent = letters[list.children.length];
+      const label = document.createElement('span'); label.textContent = choice;
+      button.append(letter, label);
+      button.addEventListener('click', () => chooseAnswer(button, choice, round.answer, round.category));
+      list.appendChild(button);
+    });
+    $('feedback').className = 'feedback';
+    $('feedback').textContent = '';
+    $('nextBtn').classList.remove('show');
+    $('hintText').textContent = 'Elige una opción para continuar.';
+    updateScore();
+    startTimer();
+  }
+  function chooseAnswer(button, choice, correctAnswer, category) {
+    if (answered) return;
+    if (Date.now() >= roundDeadline || timeLeft <= 0) {
+      expireRound();
+      return;
+    }
+    answered = true; stopTimer();
+    const isCorrect = choice === correctAnswer;
+    document.querySelectorAll('.answer').forEach(option => {
+      option.disabled = true;
+      if (option.lastElementChild.textContent === correctAnswer) option.classList.add('correct');
+    });
+    if (isCorrect) {
+      score += 10; correctCount++;
+      button.classList.add('correct');
+      $('feedback').textContent = `Correct! +10 points. ${explanations[category]}`;
+      $('feedback').className = 'feedback show good';
+    } else {
+      button.classList.add('wrong');
+      $('feedback').textContent = `Not quite. The correct answer is: ${correctAnswer} ${explanations[category]}`;
+      $('feedback').className = 'feedback show bad';
+    }
+    $('progressBar').style.width = `${((currentRound + 1) / rounds.length) * 100}%`;
+    $('nextBtn').textContent = currentRound === rounds.length - 1 ? 'Ver mi medalla 🏅' : 'Siguiente ronda →';
+    $('nextBtn').classList.add('show');
+    $('hintText').textContent = `Ronda ${currentRound + 1} completada.`;
+    updateScore();
+  }
+  function nextRound() {
+    if (!answered) return;
+    stopTimer();
+    currentRound++;
+    if (currentRound < rounds.length) {
+      renderRound();
+    } else {
+      showResults();
+    }
+  }
+  function showResults() {
+    showScreen('resultScreen');
+    $('progressBar').style.width = '100%';
+    $('finalScore').textContent = score;
+    $('resultDetails').textContent = `${correctCount} de ${rounds.length} respuestas correctas`;
+    if (score === 0) {
+      $('medalDisplay').style.display = 'none'; $('medalName').style.display = 'none';
+      $('resultTitle').textContent = '¡No ganaste ningún premio esta vez!';
+      $('resultMessage').textContent = 'Terminaste con 0 puntos, así que no desbloqueaste la medalla. ¡Inténtalo otra vez y responde antes de que termine el tiempo!';
+    } else {
+      $('medalDisplay').style.display = 'grid'; $('medalName').style.display = 'block';
+      $('resultTitle').textContent = '¡Has desbloqueado tu medalla!';
+      if (score === 50) $('resultMessage').textContent = '¡Perfecto! Conseguíste los 50 puntos y dominaste el muro misterioso.';
+      else $('resultMessage').textContent = '¡Buen trabajo! Ganaste la medalla POSSESIVE PHOTO BOOTH.';
+    }
+  }
+  function restart() {
+    stopTimer(); currentRound = 0; score = 0; correctCount = 0; answered = false;
+    updateScore(); showScreen('welcomeScreen'); $('progressBar').style.width = '0%';
+  }
+  $('startBtn').addEventListener('click', () => { stopTimer(); rounds = chooseFiveQuestions(); currentRound = 0; score = 0; correctCount = 0; updateScore(); showScreen('gameScreen'); renderRound(); });
+  $('nextBtn').addEventListener('click', nextRound);
+  $('restartBtn').addEventListener('click', restart);
+})();
+</script>
+</body>
+</html>
